@@ -2566,6 +2566,29 @@ class Preprocessor:
         return values[normal_indices]
 
 
+# 训练/验证日志的行格式: 每个字段定宽, 且对抗段 9 项常驻 (未启动时用等宽占位符),
+# 保证 log.txt 每一行的列位置从头到尾完全一致, 可直接对齐查看或导入表格。
+# 宽度留到 9999.9999 这一级, 数值变宽只会右对齐补空格, 不会挤动后面的列。
+TRAIN_LOG_FMT = (
+    "Step {:>5}/{:<5}, Total Loss: {:>9.4f}, Mel Loss: {:>9.4f}, "
+    "Mel PostNet Loss: {:>9.4f}, Energy Loss: {:>9.4f}, LR: {:>9.2e}"
+)
+ADV_LOG_FMT = (
+    ", D: {:>9.4f}, G Adv: {:>9.4f}, FM: {:>9.4f}, "
+    "Phone: {:>9.4f}, Pitch: {:>9.4f}, Scale: {:>7.2f}, "
+    "wAdv: {:>8.4f}, DGap: {:>+8.3f}, HiGap: {:>+8.3f}"
+)
+ADV_LOG_PAD = (
+    ", D: {:>9}, G Adv: {:>9}, FM: {:>9}, "
+    "Phone: {:>9}, Pitch: {:>9}, Scale: {:>7}, "
+    "wAdv: {:>8}, DGap: {:>8}, HiGap: {:>8}"
+).format(*["-" * n for n in (9, 9, 9, 9, 9, 7, 8, 8, 8)])
+VAL_LOG_FMT = (
+    "Validation Step {:>5}, Total Loss: {:>9.4f}, Mel Loss: {:>9.4f}, "
+    "Mel PostNet Loss: {:>9.4f}, Energy Loss: {:>9.4f}"
+)
+
+
 def evaluate(model, step, configs, logger=None, vocoder=None):
     preprocess_config, model_config, train_config = configs
 
@@ -2596,9 +2619,7 @@ def evaluate(model, step, configs, logger=None, vocoder=None):
 
     loss_means = [loss_sum / len(dataset) for loss_sum in loss_sums]
 
-    message = "Validation Step {}, Total Loss: {:.4f}, Mel Loss: {:.4f}, Mel PostNet Loss: {:.4f}, Energy Loss: {:.4f}".format(
-        *([step] + [l for l in loss_means])
-    )
+    message = VAL_LOG_FMT.format(*([step] + [l for l in loss_means]))
 
     if logger is not None:
         fig, wav_reconstruction, wav_prediction, tag = synth_one_sample(
@@ -2742,7 +2763,7 @@ def run_train(args, configs):
                 losses = Loss(batch, output)
                 total_loss = losses[0]
 
-                adv_msg = ""
+                adv_msg = ADV_LOG_PAD
                 if Adv.enabled and step >= Adv.start_step:
                     valid = ~output[5]
                     T = output[0].shape[1]
@@ -2788,11 +2809,7 @@ def run_train(args, configs):
                                   / (w.sum() * Adv.hi_bands).clamp(min=1.0)).item()
                         Adv.update_gain(d_gap.item(), hi_gap)
                         hi_gap_ema = Adv._hi_ema or 0.0
-                    adv_msg = (
-                        ", D: {:.4f}, G Adv: {:.4f}, FM: {:.4f}, "
-                        "Phone: {:.4f}, Pitch: {:.4f}, Scale: {:.2f}, "
-                        "wAdv: {:.4f}, DGap: {:+.3f}, HiGap: {:+.3f}"
-                    ).format(
+                    adv_msg = ADV_LOG_FMT.format(
                         d_loss.item(), g["adv"].item(), g["fm"].item(),
                         g["phone"].item(), g["pitch"].item(), adv_scale,
                         w_adv_eff, Adv._gap_ema or 0.0, hi_gap_ema
@@ -2808,10 +2825,10 @@ def run_train(args, configs):
 
                 if step % log_step == 0:
                     losses = [l.item() for l in losses]
-                    message1 = "Step {}/{}, ".format(step, total_step)
-                    message2 = "Total Loss: {:.4f}, Mel Loss: {:.4f}, Mel PostNet Loss: {:.4f}, Energy Loss: {:.4f}, LR: {:.2e}".format(
-                        *(losses + [optimizer.current_lr])
-                    ) + adv_msg
+                    message1 = TRAIN_LOG_FMT.format(
+                        step, total_step, *(losses + [optimizer.current_lr])
+                    )
+                    message2 = adv_msg
 
                     with open(os.path.join(train_log_path, "log.txt"), "a") as f:
                         f.write(message1 + message2 + "\n")
