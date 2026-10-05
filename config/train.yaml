@@ -22,8 +22,8 @@ preprocessing:
   energy:
     normalization: True
 optimizer:
-  lr: 0.0002
-  min_lr: 0.00002       # 余弦衰减的下限
+  lr: 0.00004           # 续训用: 峰值降到 4e-5, 使第 10000 步的余弦值接上收尾的 2.0e-05, 不跳变
+  min_lr: 0.00001       # 余弦衰减的下限
   warmup_step: 500      # 线性 warmup 的步数, 0 = 不 warmup
   batch_size: 16
   betas: [0.9, 0.98]
@@ -32,7 +32,7 @@ optimizer:
   grad_clip_thresh: 5.0
   grad_acc_step: 1
 step:
-  total_step: 10000
+  total_step: 35000     # 续训: 自 last 的 10000 步再训 25000 步, 约 10h37m (含 41m 预处理)
   log_step: 100
   synth_step: 500
   val_step: 500
