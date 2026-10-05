@@ -3,7 +3,7 @@
 ---
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![GitHub](https://img.shields.io/github/NatwayTeam/FastSingerEngine?logo=github)](https://github.com/NatwayTeam/FastSingerEngine)
+[![GitHub Stars](https://img.shields.io/github/stars/NatwayTeam/FastSingerEngine?logo=github)](https://github.com/NatwayTeam/FastSingerEngine)
 [![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/)
 
 > 以深度神经网络为基础构建的新一代歌声合成引擎！
