@@ -1,13 +1,14 @@
-# FastSinger
-
 ![FastSinger](https://www.ttfont.com/preview/1/12723130/000000/95/FastSinger "FastSingerLogo")
+
+---
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![GitHub](https://img.shields.io/github/NatwayTeam/FastSingerEngine?logo=github)](https://github.com/NatwayTeam/FastSingerEngine)
 [![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/)
 
 > 以深度神经网络为基础构建的新一代歌声合成引擎！
 
->[!注意]
+> [!NOTE]
 >目前项目处于早期开发阶段，不代表最终正式版效果。
 >本项目是为虚拟歌姬打造的合成引擎，一切与虚拟歌姬无关的声库，皆与本项目的愿景背道而驰，我们既不会帮助其宣传，更不会收录其声库。
 
@@ -21,7 +22,7 @@
 
 **设计特色** ：非自回归 · 无时长预测器 · 无音高预测器 · 声码器冻结 · 音素切分零人工标注 · 对抗项延迟开启并动态调权 · 多重声学模型对抗训练
 
->[!注意]
+> [!NOTE]
 >生成器不含时长预测器与音高预测器，时长 与 音高 必须由调用方提供：训练阶段来自预处理（RMVPE 提取 F0、mel 谱自动切分时长），推理阶段由节拍参数推导。模型因此不带音高条件，音高完全由外部 F0 曲线决定。
 
 ---
@@ -42,7 +43,7 @@ FastSinger/
 ├── .gitignore
 │
 ├── data/                  训练时所需的WAV音频（不入库）
-├── preprocessed/     预处理产物不计入仓库）
+├── preprocessed/     预处理产物（不计入仓库）
 ├── models/              所有模型权重（不计入仓库）
 │   ├── rmvpe.pt
 │   └── hifigan/
@@ -67,7 +68,7 @@ pip install -r requirements.txt
 
 Rmvpe和HifiGan的权重不在仓库中，缺失时程序将直接报错退出，须先行放置到位。
 
-`rmvpe.pt` 时训练时预处理提取音高时需要；`hifigan/` 下两个文件训练与推理均需。路径在 `config/train.yaml` 与 `config/infer.yaml` 的 `vocoder` 段配置。
+`rmvpe.pt` 是训练时预处理提取音高所需；`hifigan/` 下两个文件训练与推理均需。路径在 `config/train.yaml` 与 `config/infer.yaml` 的 `vocoder` 段配置。
 
 ### 三、准备数据
 
