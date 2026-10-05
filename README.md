@@ -3,7 +3,7 @@
 ---
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![GitHub Stars](https://img.shields.io/github/stars/NatwayTeam/FastSingerEngine?logo=github)](https://github.com/NatwayTeam/FastSingerEngine)
+[![GitHub](https://img.shields.io/badge/GitHub-FastSingerEngine-181717?logo=github)](https://github.com/NatwayTeam/FastSingerEngine)
 [![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/)
 
 > 以深度神经网络为基础构建的新一代歌声合成引擎！
@@ -18,7 +18,7 @@
 
 **推理链路** ：拼音 和音素序列 · `Encoder` · `VarianceAdaptor` · 80 维梅尔频谱 · `PostNet` 残差 · HiFi-GAN · 22050 Hz 波形
 
-**训练链路** ：波形 · 梅尔频谱 / F0 / 能量 / 时长自动提取 · 生成器 · L1 + 能量 MSE + 三路对抗损失 · `best` / `last` checkpoint
+**训练链路** ：波形 · 梅尔频谱 、 F0 、 能量 和 时长自动提取 · 生成器 · L1 + 能量 MSE + 三路对抗损失 · `best` / `last` checkpoint
 
 **设计特色** ：非自回归 · 无时长预测器 · 无音高预测器 · 声码器冻结 · 音素切分零人工标注 · 对抗项延迟开启并动态调权 · 多重声学模型对抗训练
 
