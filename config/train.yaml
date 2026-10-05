@@ -37,10 +37,10 @@ step:
   synth_step: 500
   val_step: 500
   save_step: 1000
-# 对抗训练: 三个判别器全部作用在生成的 mel 上 (声码器是冻结的, 不训练).
-# realism = 多尺度 mel 判别器 (hinge) + feature matching
-# semantics = 逐帧音素交叉熵, 直接要求 mel 里含有指定的音素
-# pitch = (mel, 输入 f0) 判别器, 要求谐波与要求的音高对齐
+# 对抗训练: 三个判别器全部作用在生成的梅尔频谱上 (声码器是冻结的, 不训练).
+# realism = 多尺度梅尔频谱判别器 (hinge) + feature matching
+# semantics = 逐帧音素交叉熵, 直接要求梅尔频谱里含有指定的音素
+# pitch = (梅尔频谱, 输入 f0) 判别器, 要求谐波与要求的音高对齐
 adversarial:
   enabled: True
   start_step: 3000        # 先让纯 L1 收敛, 太早开对抗会毁掉重建
@@ -63,9 +63,9 @@ adversarial:
   eq_target: 0.6         # 可接受的判别器强度 (DGap 取负后的绝对值)
   ctrl_k: 0.05           # 比例系数, 越大收放越快
   ctrl_every: 25
-  hi_bands: 12            # 统计高频能量差时只看顶部多少条 mel 频带
+  hi_bands: 12            # 统计高频能量差时只看顶部多少条梅尔频谱频带
   hi_ceiling: 0.2
-  # PhoneClassifier 只用真实 mel 训练, 是生成器的语义锚点。持续变强的分类器
+  # PhoneClassifier 只用真实梅尔频谱训练, 是生成器的语义锚点。持续变强的分类器
   # 会让这个锚点不断漂移, 所以训到 cls_train_until 就冻结, 之后不再更新。
   # 缺省 = start_step + ramp_steps; 填绝对步数可手动指定。
   cls_train_until: 4000

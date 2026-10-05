@@ -16,14 +16,14 @@
 
 ## 总体架构
 
-**推理链路** ：拼音 · 音素序列 · `Encoder` · `VarianceAdaptor` · 80 维 mel · `PostNet` 残差 · HiFi-GAN · 22050 Hz 波形
+**推理链路** ：拼音 和音素序列 · `Encoder` · `VarianceAdaptor` · 80 维梅尔频谱 · `PostNet` 残差 · HiFi-GAN · 22050 Hz 波形
 
-**训练链路** ：波形 · mel / F0 / 能量 / 时长自动提取 · 生成器 · L1 + 能量 MSE + 三路对抗损失 · `best` / `last` checkpoint
+**训练链路** ：波形 · 梅尔频谱 / F0 / 能量 / 时长自动提取 · 生成器 · L1 + 能量 MSE + 三路对抗损失 · `best` / `last` checkpoint
 
 **设计特色** ：非自回归 · 无时长预测器 · 无音高预测器 · 声码器冻结 · 音素切分零人工标注 · 对抗项延迟开启并动态调权 · 多重声学模型对抗训练
 
 > [!NOTE]
->生成器不含时长预测器与音高预测器，时长 与 音高 必须由调用方提供：训练阶段来自预处理（RMVPE 提取 F0、mel 谱自动切分时长），推理阶段由节拍参数推导。模型因此不带音高条件，音高完全由外部 F0 曲线决定。
+>生成器不含时长预测器与音高预测器，时长 与 音高 必须由调用方提供：训练阶段来自预处理（RMVPE 提取 F0、梅尔频谱自动切分时长），推理阶段由节拍参数推导。模型因此不带音高条件，音高完全由外部 F0 曲线决定。
 
 ---
 
@@ -115,8 +115,6 @@ python Loader.py '{"pinyin":"zhuang","bpm":120,"bars":1,"midi":60,"curve":["+0.0
 > `pinyin` 必须出现在训练语料中，否则程序直接退出——推理依赖预处理生成的 `preprocessed/pinyin2phones.json`，语料外拼音无兜底推导。此外，训练期 F0 来自 RMVPE 对真实音频的提取，含自然颤音与噪声，推理期 F0 为理想平滑曲线，两者分布不一致，将影响最终听感。
 
 推理仅需 `models/FastSinger.pth`、`models/hifigan/`、`preprocessed/stats.json` 与 `preprocessed/pinyin2phones.json`，不需要 `rmvpe.pt` 及各 `.npy` 中间文件。
-
----
 
 ## 致谢
 
