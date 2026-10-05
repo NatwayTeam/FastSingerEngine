@@ -1,4 +1,4 @@
-![FastSinger](https://www.ttfont.com/preview/1/12723130/000000/95/FastSinger "FastSingerLogo")
+![FastSinger](Logo.png "FastSingerLogo")
 
 ---
 
@@ -35,6 +35,7 @@ FastSinger/
 │   └── infer.yaml       推理模型目录与声码器位置
 ├── requirements.txt
 ├── README.md
+├── Logo.png
 ├── LICENSE
 ├── .gitignore
 │
