@@ -1,0 +1,11 @@
+librosa == 0.11.0
+matplotlib == 3.11.2
+numba == 0.67.0
+numpy == 2.4.6
+PyYAML == 6.0.3
+scikit-learn == 1.9.1
+scipy == 1.17.1
+soundfile == 0.14.0
+tensorboard == 2.21.0
+torch == 2.14.0
+tqdm == 4.70.1
