@@ -4,13 +4,15 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![GitHub](https://img.shields.io/badge/GitHub-FastSingerEngine-181717?logo=github)](https://github.com/NatwayTeam/FastSingerEngine)
-[![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/)
+[![Python 3.11](https://img.shields.io/badge/Python-3.11-blue.svg)](https://www.python.org/)
 
 > 以深度神经网络为基础构建的新一代歌声合成引擎！
 
 > [!NOTE]
->目前项目处于早期开发阶段，不代表最终正式版效果。
->本项目是为虚拟歌姬打造的合成引擎，一切与虚拟歌姬无关的声库，皆与本项目的愿景背道而驰，我们既不会帮助其宣传，更不会收录其声库。
+> 目前项目处于早期开发阶段，不代表最终正式版效果。
+
+> [!WARNING]
+> 本项目是为虚拟歌姬打造的合成引擎，一切与虚拟歌姬无关的声库，皆与本项目的愿景背道而驰，我们既不会帮助其宣传，更不会收录其声库。
 
 ## 总体架构
 
@@ -20,8 +22,8 @@
 
 **设计特色** ：非自回归 · 无时长预测器 · 无音高预测器 · 声码器冻结 · 音素切分零人工标注 · 对抗项延迟开启并动态调权 · 多重声学模型对抗训练
 
-> [!NOTE]
->生成器不含时长预测器与音高预测器，时长 与 音高 必须由调用方提供：训练阶段来自预处理（RMVPE 提取 F0、梅尔频谱自动切分时长），推理阶段由节拍参数推导。模型因此不带音高条件，音高完全由外部 F0 曲线决定。
+> [!IMPORTANT]
+> 生成器不含时长预测器与音高预测器，时长 与 音高 必须由调用方提供：训练阶段来自预处理（RMVPE 提取 F0、梅尔频谱自动切分时长），推理阶段由节拍参数推导。模型因此不带音高条件，音高完全由外部 F0 曲线决定。
 
 ## 文件目录
 
@@ -39,94 +41,34 @@ FastSinger/
 ├── LICENSE
 ├── .gitignore
 │
-├── data/                训练时所需的WAV音频（不入库）
-├── preprocessed/        预处理产物（不计入仓库）
-├── models/              所有模型权重（不计入仓库）
-│   ├── rmvpe.pt
-│   └── hifigan/
+├── data/                训练所需的 WAV 音频（不入库），目录由 train.yaml 的 path.corpus_path 指定
+├── preprocessed/        预处理产物（不计入仓库），目录由 model.yaml 的 path.preprocessed_path 指定
+├── models/              所有模型权重（不计入仓库），训练输出至 path.ckpt_path、推理读取 path.model_path
+│   ├── rmvpe.pt         须放在 path.ckpt_path 所指目录下
+│   └── hifigan/         即 vocoder.path 所指目录
 │       ├── config.json
 │       └── HifiGan.pth
-└── out/                 TensorBoard 日志与推理输出（不计入仓库）
+└── out/                 TensorBoard 日志（path.log_path）与推理输出（不计入仓库）
 ```
 
 `Maker.py` 与 `Loader.py` 为训练与推理全部实现，合计约四千行，其余均为配置与文档。
 
 ## 使用方法
 
-### 一、安装依赖
+### 一、配置文件
 
-```bash
-pip install -r requirements.txt
-```
+`config/` 目录下共有三份配置文件，语料目录、权重位置与训练参数均在此设定，各文件的读取范围与管理范围如下：
 
-依赖版本已在 `requirements.txt` 固定，测试时环境为 Python 3.11。
-
-### 二、准备权重
-
-Rmvpe和HifiGan的权重不在仓库中，缺失时程序将直接报错退出，须先行放置到位。
-
-`rmvpe.pt` 是训练时预处理提取音高所需；`hifigan/` 下两个文件训练与推理均需。路径在 `config/train.yaml` 与 `config/infer.yaml` 的 `vocoder` 段配置。
-
-### 三、准备数据
-
-将 WAV 置于 `./data`（`config/train.yaml` 的 `path.corpus_path`），文件名须匹配：文件名(拼音)(MIDI 音号)(时长)。
-
-采样率无需自行处理，会重采样至 22050 Hz 并混合为单声道。
-
-音素切分完全自动，不依赖任何人工标注。分界点在梅尔频谱上自动检测，整个预处理仅读取 WAV 文件及其文件名，不读取转写或对齐文件。
-
-### 四、训练
-
-```bash
-python Maker.py train
-```
-
-该命令依次完成预处理与训练，无独立预处理子命令。启动后依次输出学习率调度、对抗训练参数与参数量，随后进入进度条。
-
-> [!NOTE]
-> **断点续训为自动行为。** 启动时读取`last`，存在则自其步数继续，不存在则从零开始，无需额外参数。`best` 按验证损失保存且仅含生成器不含判别器，其指标可与非对抗训练直接比较。
-
-主要配置位于 `config/train.yaml`：`step.total_step` 为总步数（默认 10000），`optimizer.lr` 为学习率峰值（0.0002），`min_lr` 为余弦衰减下限，`warmup_step` 为线性预热步数。对抗训练的开关、起始步数与各项权重位于 `adversarial` 段。各项含义、取值范围与填法见「配置说明」。
-
-### 五、推理
-
-```bash
-python Loader.py '{"pinyin":"zhuang","bpm":120,"bars":1,"midi":60,"curve":["+0.0","+0.1"]}'
-```
-
-配置采用相对路径，须在仓库根目录下执行。输出写入 `out/{拼音}_{音高}.wav`，例如 `out/zhuang_60.wav`，采样率 22050 Hz，写入前峰值归一化至 0.92。
-
-输入 JSON 字段：
-
-- `pinyin`（必填）——拼音音节，自动转小写。
-- `bpm`（必填）——速度，须大于 0。
-- `bars`（必填）——小节数，须大于 0。
-- `midi`（必填）——基准 MIDI 音号，69 对应 A4 = 440 Hz。
-- `num`（可选，默认 4）——拍号分子。
-- `den`（可选，默认 4）——拍号分母。
-- `curve`（可选，默认 `["+0.0"]`）——半音偏移序列，线性插值后叠加至 `midi`，用于滑音。
-
-推理阶段无时长预测器，时长与音高均由上述参数推导：总帧数按 `bars × num × (60/bpm) × (4/den)` 换算；音素分配依据 `stats.json` 记录的训练期平均时长，首音素取其均值、余量归尾音素，结果确定。F0 由 `midi` 与 `curve` 插值换算，清音声母对应帧置零。
-
-> [!NOTE]
-> `pinyin` 必须出现在训练语料中，否则程序直接退出——推理依赖预处理生成的 `preprocessed/pinyin2phones.json`，语料外拼音无兜底推导。此外，训练期 F0 来自 RMVPE 对真实音频的提取，含自然颤音与噪声，推理期 F0 为理想平滑曲线，两者分布不一致，将影响最终听感。
-
-推理仅需 `models/FastSinger.pth`、`models/hifigan/`、`preprocessed/stats.json` 与 `preprocessed/pinyin2phones.json`，不需要 `rmvpe.pt` 及各 `.npy` 中间文件。
-
-## 配置说明
-
-三份配置各有分工，改动前先确认改对了文件：
-
-| 文件 | 谁读取 | 管什么 |
+| 文件 | 读取范围 | 管理范围 |
 | --- | --- | --- |
 | `config/model.yaml` | `Maker.py` 与 `Loader.py` 都读 | 模型结构、音频与频谱参数、预处理产物目录 |
 | `config/train.yaml` | 仅 `Maker.py` | 语料与权重路径、优化器、步数调度、对抗训练 |
 | `config/infer.yaml` | 仅 `Loader.py` | 生成器权重与声码器位置、推理期能量控制 |
 
-> [!NOTE]
-> `Maker.py` 启动时把 `train.yaml` 合并进 `model.yaml`（同名键以 `train.yaml` 为准），而 `Loader.py` 只读 `model.yaml`。因此凡是训练与推理都要用的键（`path.preprocessed_path`、`audio.*`、`transformer.*` 等）必须写在 `model.yaml`，写进 `train.yaml` 会导致推理读不到。
+> [!WARNING]
+> `Maker.py` 启动时把 `train.yaml` 合并进 `model.yaml`（同名键以 `train.yaml` 为准），而 `Loader.py` 只读 `model.yaml`。凡训练与推理都要用的键（`path.preprocessed_path`、`audio.*`、`transformer.*` 等）必须写在 `model.yaml`，写进 `train.yaml` 会导致推理读不到。
 
-### `config/model.yaml`
+#### `config/model.yaml`
 
 | 配置项 | 默认值 | 含义与填法 |
 | --- | --- | --- |
@@ -149,13 +91,13 @@ python Loader.py '{"pinyin":"zhuang","bpm":120,"bars":1,"midi":60,"curve":["+0.0
 | `variance_embedding.n_bins` | `256` | 分桶数量，决定两张 embedding 表的大小，须与已有权重一致。 |
 | `max_seq_len` | `1000` | 位置编码表长度。训练期序列超过它会因形状不匹配报错，推理期超长则改用即时正弦编码。单音节只有 1~2 个音素，保持默认即可。 |
 
-### `config/train.yaml`
+#### `config/train.yaml`
 
 **路径与权重**
 
 | 配置项 | 默认值 | 含义与填法 |
 | --- | --- | --- |
-| `path.corpus_path` | `./data` | 训练 WAV 所在目录，只扫描该目录第一层的 `.wav`，不递归子目录。文件名格式见「三、准备数据」。 |
+| `path.corpus_path` | `./data` | 训练 WAV 所在目录，只扫描该目录第一层的 `.wav`，不递归子目录。文件名格式见「四、准备数据」。 |
 | `path.ckpt_path` | `./models` | 权重写出目录，同时是 `rmvpe.pt` 的查找位置，缺文件直接报错退出。 |
 | `path.log_path` | `./out/log` | TensorBoard 日志根目录，训练与验证分别写入其 `train/`、`val/` 子目录。 |
 | `path.result_path` | `./out` | 启动时创建该目录，此外不被读取：日志由 `path.log_path` 决定，推理输出写死在 `out/`，属保留字段。 |
@@ -222,7 +164,7 @@ python Loader.py '{"pinyin":"zhuang","bpm":120,"bars":1,"midi":60,"curve":["+0.0
 | `adversarial.cls_train_until` | `4000` | 音素分类器训练到该步后冻结，使音素项成为静止锚点；留空则自动取 `start_step + ramp_steps`。 |
 | `adversarial.cls_ce_weight` | `0.1` | 分类器在判别器目标中的权重，冻结后失效。 |
 
-### `config/infer.yaml`
+#### `config/infer.yaml`
 
 | 配置项 | 默认值 | 含义与填法 |
 | --- | --- | --- |
@@ -239,6 +181,67 @@ python Loader.py '{"pinyin":"zhuang","bpm":120,"bars":1,"midi":60,"curve":["+0.0
 > - 只改 `optimizer.*`、`step.*`、`adversarial.*`、`energy_control`：不影响特征与模型结构，重新执行 `python Maker.py train` 即可续训，或直接重新推理。
 > - 改 `audio.*`、`preprocessing.*`：特征分布变了，删掉 `models/` 下的旧权重后重跑，否则续训会接着旧权重吃新特征。
 > - 改 `transformer.*`、`variance_*`、`max_seq_len`：模型结构变了，旧权重加载会直接失败，删掉旧权重重训。
+
+### 二、安装依赖
+
+```bash
+pip install -r requirements.txt
+```
+
+依赖版本已在 `requirements.txt` 固定，测试时环境为 Python 3.11。
+
+### 三、准备权重
+
+`rmvpe.pt` 与 `hifigan/` 下的两个文件均未随仓库提供，缺失时程序将直接报错退出，须先行下载并放置到位：
+
+- `rmvpe.pt`——训练阶段预处理提取音高所用，置于 `config/train.yaml` 的 `path.ckpt_path` 项中填写的目录（默认 `./models`）。[下载 rmvpe.pt](https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/rmvpe.pt)
+- `hifigan/HifiGan.pth` 与 `hifigan/config.json`——训练与推理均需，置于 `vocoder.path` 项中填写的目录（默认 `./models/hifigan`）；`config/train.yaml` 与 `config/infer.yaml` 各有该段，两处须指向同一目录。权重取自 [HiFi-GAN 官方预训练模型](https://drive.google.com/drive/folders/1-eEYTB5Av9jNql0WGBlRoi-WH2J7bp5Y?usp=sharing) LJ_V1 目录下的 `generator_v1.pth`，重命名为 `HifiGan.pth`；结构配置为 [`config_v1.json`](https://raw.githubusercontent.com/jik876/hifi-gan/master/config_v1.json)，重命名为 `config.json`。
+
+### 四、准备数据
+
+将 WAV 置于 `config/train.yaml` 的 `path.corpus_path` 项中填写的目录（默认 `./data`），文件名须符合以下格式：文件名(拼音)(MIDI 音号)(时长)。
+
+采样率无需自行处理，会重采样至 22050 Hz 并混合为单声道。
+
+音素切分完全自动，不依赖任何人工标注。分界点在梅尔频谱上自动检测，整个预处理仅读取 WAV 文件及其文件名，不读取转写或对齐文件。
+
+### 五、训练
+
+```bash
+python Maker.py train
+```
+
+该命令依次完成预处理与训练，无独立预处理子命令。启动后依次输出学习率调度、对抗训练参数与参数量，随后进入进度条。
+
+> [!NOTE]
+> **断点续训为自动行为。** 启动时读取`last`，存在则自其步数继续，不存在则从零开始，无需额外参数。`best` 按验证损失保存且仅含生成器不含判别器，其指标可与非对抗训练直接比较。
+
+主要配置位于 `config/train.yaml`：`step.total_step` 为总步数（默认 10000），`optimizer.lr` 为学习率峰值（0.0002），`min_lr` 为余弦衰减下限，`warmup_step` 为线性预热步数。对抗训练的开关、起始步数与各项权重位于 `adversarial` 段。各项含义、取值范围与填法见「一、配置文件」。
+
+### 六、推理
+
+```bash
+python Loader.py '{"pinyin":"zhuang","bpm":120,"bars":1,"midi":60,"curve":["+0.0","+0.1"]}'
+```
+
+配置采用相对路径，须在仓库根目录下执行。输出写入 `out/{拼音}_{音高}.wav`，例如 `out/zhuang_60.wav`，采样率 22050 Hz，写入前峰值归一化至 0.92。
+
+输入 JSON 字段：
+
+- `pinyin`（必填）——拼音音节，自动转小写。
+- `bpm`（必填）——速度，须大于 0。
+- `bars`（必填）——小节数，须大于 0。
+- `midi`（必填）——基准 MIDI 音号，69 对应 A4 = 440 Hz。
+- `num`（可选，默认 4）——拍号分子。
+- `den`（可选，默认 4）——拍号分母。
+- `curve`（可选，默认 `["+0.0"]`）——半音偏移序列，线性插值后叠加至 `midi`，用于滑音。
+
+推理阶段无时长预测器，时长与音高均由上述参数推导：总帧数按 `bars × num × (60/bpm) × (4/den)` 换算；音素分配依据 `stats.json` 记录的训练期平均时长，首音素取其均值、余量归尾音素，结果确定。F0 由 `midi` 与 `curve` 插值换算，清音声母对应帧置零。
+
+> [!WARNING]
+> `pinyin` 必须出现在训练语料中，否则程序直接退出——推理依赖预处理生成的 `preprocessed/pinyin2phones.json`，语料外拼音无兜底推导。此外，训练期 F0 来自 RMVPE 对真实音频的提取，含自然颤音与噪声，推理期 F0 为理想平滑曲线，两者分布不一致，将影响最终听感。
+
+推理仅需 `models/FastSinger.pth`、`models/hifigan/`、`preprocessed/stats.json` 与 `preprocessed/pinyin2phones.json`，不需要 `rmvpe.pt` 及各 `.npy` 中间文件。
 
 ## 致谢
 
