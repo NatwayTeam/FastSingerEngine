@@ -245,7 +245,11 @@ python Loader.py '{"pinyin":"zhuang","bpm":120,"bars":1,"midi":60,"curve":["+0.0
 
 ## 致谢
 
-感谢 **[ming024/FastSpeech2](https://github.com/ming024/FastSpeech2)**，该仓库为本项目早期开发提供了核心思路，`Encoder`、`VarianceAdaptor`、`PostNet`、`LengthRegulator` 等结构的设计与实现均参考自它。本仓库 `LICENSE` 文件亦沿用其版权声明（Chung-Ming Chien，MIT）。
+感谢 **[ming024/FastSpeech2](https://github.com/ming024/FastSpeech2)**，该仓库为本项目早期开发提供了核心思路，`Encoder`、`VarianceAdaptor`、`PostNet`、`LengthRegulator` 等结构的设计与实现均参考自它。
 
 同时感谢 [xcmyz/FastSpeech](https://github.com/xcmyz/FastSpeech)（ming024 实现的上游基础）、[jik876/hifi-gan](https://github.com/jik876/hifi-gan)（声码器，见 `models/LICENSE`）、[FastSpeech 2](https://arxiv.org/abs/2006.04558v1) 论文，以及 [RMVPE](https://arxiv.org/abs/2306.15412) 的 F0 提取方法。
+
+## 许可证
+
+本仓库以 [MIT 许可](LICENSE) 发布，版权 © 2026 NatwayTeam。上述参考与依赖的第三方组件各自保留其原有许可及版权声明：[ming024/FastSpeech2](https://github.com/ming024/FastSpeech2)（MIT，© Chung-Ming Chien）、[jik876/hifi-gan](https://github.com/jik876/hifi-gan)（MIT，© Jungil Kong，声明见 `models/LICENSE`）。
 
