@@ -32,20 +32,20 @@ FastSinger/
 ├── Maker.py             预处理 · 训练 · 验证
 ├── Loader.py            推理
 ├── config/
-│   ├── model.yaml       模型结构、音频与频谱参数
-│   ├── train.yaml       路径、优化器、步数调度、对抗训练
-│   └── infer.yaml       推理模型目录与声码器位置
+│   ├── model.yaml      模型结构、音频与频谱参数
+│   ├── train.yaml      路径、优化器、步数调度、对抗训练
+│   └── infer.yaml      推理模型目录与声码器位置
 ├── requirements.txt
 ├── README.md
 ├── Logo.png
 ├── LICENSE
 ├── .gitignore
 │
-├── data/                训练所需的 WAV 音频（不入库），目录由 train.yaml 的 path.corpus_path 指定
+├── data/                训练所需的 WAV 音频（不计入仓库），目录由 train.yaml 的 path.corpus_path 指定
 ├── preprocessed/        预处理产物（不计入仓库），目录由 model.yaml 的 path.preprocessed_path 指定
 ├── models/              所有模型权重（不计入仓库），训练输出至 path.ckpt_path、推理读取 path.model_path
-│   ├── rmvpe.pt         须放在 path.ckpt_path 所指目录下
-│   └── hifigan/         即 vocoder.path 所指目录
+│   ├── rmvpe.pt        须放在 path.ckpt_path 所指目录下
+│   └── hifigan/        即 vocoder.path 所指目录
 │       ├── config.json
 │       └── HifiGan.pth
 └── out/                 TensorBoard 日志（path.log_path）与推理输出（不计入仓库）
